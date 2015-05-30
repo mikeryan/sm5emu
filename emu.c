@@ -249,10 +249,10 @@ void op_INCB(u8 op, u8 arg) {
 
 void op_DECB(u8 op, u8 arg) {
     --BL;
-    if (BL == 0xFF)
+    if (BL == 0xFF) {
         BL = 0xF;
-    else if (BL == 0x00)
         skip = 1; // FIXME test
+    }
 }
 
 
