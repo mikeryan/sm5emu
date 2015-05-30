@@ -682,6 +682,12 @@ void debugger(u8 op, u8 arg) {
             skip = 1 - skip;
         } else if (strcmp(tokens[0], "hiz") == 0) {
             hiz_break = 1;
+        } else if (strcmp(tokens[0], "poke") == 0) {
+            if (num < 3) {
+                printf("Error: poke requires two args\n");
+            } else {
+                RAM[strtoul(tokens[1], NULL, 16)] = strtoul(tokens[2], NULL, 16);
+            }
         }
     }
 }
