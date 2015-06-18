@@ -70,15 +70,13 @@ static void hexdump(u8 *ptr, unsigned len, int bytes) {
 }
 
 
-///////////////
-//
-//
+////////////////////////////////
+// instruction emulation
 //
 
 
-/////////
+//////////////////
 // address control
-/////////
 
 void op_TR(u8 op, u8 arg) {
     pc.addr = op & 0b111111;
@@ -121,9 +119,8 @@ void op_RTN(u8 op, u8 arg) {
 }
 
 
-//////////
+////////////////
 // data transfer
-//////////
 
 void op_LAX(u8 op, u8 arg) {
     A = op & 0b1111;
@@ -210,7 +207,6 @@ void op_EX(u8 op, u8 arg) {
 
 /////////////
 // arithmetic
-////////////
 
 void op_ADX(u8 op, u8 arg) {
     A = A + (op & 0b1111);
@@ -256,9 +252,8 @@ void op_DECB(u8 op, u8 arg) {
 }
 
 
-/////////
+///////
 // test
-////////
 
 void op_TC(u8 op, u8 arg) {
     if (C)
@@ -304,9 +299,8 @@ void op_TPB(u8 op, u8 arg) {
 }
 
 
-/////////
-// bit manip
-/////////
+///////////////////
+// bit manipulation
 
 void op_RM(u8 op, u8 arg) {
     u8 mask = 1 << (op & 0b11);
@@ -322,9 +316,8 @@ void op_RC(u8 op, u8 arg) {
 }
 
 
-///////
+/////////////
 // IO control
-////////
 
 void op_OUTL(u8 op, u8 arg) {
     printf("setting port0 to %x\n", A);
@@ -343,10 +336,10 @@ void op_OUT(u8 op, u8 arg) {
 }
 
 
-//////////
-// unknown
-//////////
+/////////
+// others
 
+// load from ROM
 void op_PAT(u8 op, u8 arg) {
     pc_t load;
     u8 romval;
@@ -359,6 +352,7 @@ void op_PAT(u8 op, u8 arg) {
     A = romval & 0xf;
 }
 
+// read from secret ROM
 void op_DTA(u8 op, u8 arg) {
     static u8 secret[8] = { 0xFC, 0xFC, 0xA5, 0x6C, 0x03, 0x8F, 0x1B, 0x9A };
     u8 offset, BL_t;
@@ -510,6 +504,13 @@ void emulate(void) {
     }
 }
 
+
+////////////////////////////////
+// debugger
+//
+
+
+
 void debugger(u8 op, u8 arg) {
     char buf[4096];
     char *tokens[16], *token;
@@ -647,11 +648,6 @@ void debugger(u8 op, u8 arg) {
         }
     }
 }
-
-//
-//
-//
-////////////////
 
 void decode(u8 op, u8 arg) {
     // NOP
