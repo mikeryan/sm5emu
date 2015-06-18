@@ -1,3 +1,4 @@
+#include <err.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@ typedef struct _pc_t {
 
 pc_t pc = { 0, 0 };
 pc_t frame_pc = { 0, 0 };
-pc_t stack[4] = { 0, };
+pc_t stack[4] = { { 0, }, };
 unsigned sp = 0;
 
 u8 A = 0, X = 0;
@@ -261,7 +262,6 @@ void op_TC(u8 op, u8 arg) {
 }
 
 void op_TM(u8 op, u8 arg) {
-    u8 m = RAM[B];
     if (RAM[B] & (1 << (op & 0b11)))
         skip = 1;
 }
@@ -756,7 +756,7 @@ void load_data(char *name) {
 
     file = fopen(name, "r");
     if (file == NULL)
-        err(1, "Can't open $s", name);
+        err(1, "Can't open %s", name);
 
     while (fscanf(file, "%u,%u,%u,%u", &ts, &cic_in, &foo, &foo2) == 4) {
         sample[total_samples].ts = (ts - 10240625) / 1250; // nanoseconds -> cycles
