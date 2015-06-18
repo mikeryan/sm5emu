@@ -13,7 +13,7 @@ void decode(u8 op, u8 arg);
 u8 ROM[0x10][0x40];
 #define FETCH(X) do { (X) = ROM[pc.page][pc.addr]; ++pc.addr; } while (0)
 
-u8 RAM[0x40]; // twice as much as marsh says
+u8 RAM[0x40]; // A-series chips have 2x the RAM of non-A chips
 
 typedef struct _pc_t {
     u8 page;
@@ -32,6 +32,10 @@ u8 C = 0;
 int skip = 0;
 int port[3] = { 0, 0, 0 };
 int port2_hiz = 1;
+
+// debugger control
+int run = 0;
+int verbose = 0;
 
 int do_break = 0;
 pc_t breakpoint = { 0, 0 };
@@ -225,7 +229,7 @@ void op_ADC(u8 op, u8 arg) {
     if (A >= 0x10) {
         A %= 0x10;
         C = 1;
-        skip = 1; // FIXME test?
+        skip = 1;
     } else {
         C = 0;
     }
@@ -241,10 +245,6 @@ void op_INCB(u8 op, u8 arg) {
         BL = 0;
         skip = 1;
     }
-    /*
-    else if (BL == 0x0F)
-        skip = 1; // FIXME test
-        */
 }
 
 void op_DECB(u8 op, u8 arg) {
@@ -289,7 +289,7 @@ void op_TPB(u8 op, u8 arg) {
                     break;
             printf("using sample %d / %d\n", i+1, total_samples);
             port[1] = sample[i].in;
-        } else {
+        } else { // flip bit on each call
             port[1] = 1 - port[1];
         }
     }
@@ -297,18 +297,10 @@ void op_TPB(u8 op, u8 arg) {
     if (num == 0) {
         skip = 1;
         return;
-        // abort();
     }
 
     if (port[num])
         skip = 1;
-
-    // printf("%8u checking port %d [%d]\n", cycle, num, port[num]);
-
-    /*
-    if (num == 0)
-        port[num] = rand() & 1;
-    */
 }
 
 
@@ -339,8 +331,6 @@ void op_OUTL(u8 op, u8 arg) {
 }
 
 void op_OUT(u8 op, u8 arg) {
-    // printf("%8u port %x twrite %x\n", cycle, BL, A);
-
     if (BL == 0xf) {
         port2_hiz = A ? 0 : 1;
         printf("%8u port write hiz\n", cycle);
@@ -350,10 +340,6 @@ void op_OUT(u8 op, u8 arg) {
         if (!port2_hiz)
             printf("%8u port 2 write %x\n", cycle, port[0]);
     }
-
-    // port[0] = port[1] = port[2] = A;
-    // port[1] = port[2] = A;
-    // port[2] = A;
 }
 
 
@@ -365,13 +351,7 @@ void op_PAT(u8 op, u8 arg) {
     pc_t load;
     u8 romval;
 
-    /* according to the manual, PAT loads from page 4.
-     * the code loads 14 bytes into RAM. page 8 has a 14 byte string that's
-     * mostly ASCII. let's assume they modified the die slightly.
-     */
-
     load.page = 4;
-    // load.page = 8;
     load.addr = ((X & 0b11) << 4) | A;
 
     romval = ROM[load.page][load.addr];
@@ -382,14 +362,6 @@ void op_PAT(u8 op, u8 arg) {
 void op_DTA(u8 op, u8 arg) {
     static u8 secret[8] = { 0xFC, 0xFC, 0xA5, 0x6C, 0x03, 0x8F, 0x1B, 0x9A };
     u8 offset, BL_t;
-
-    /*
-    uint16_t divider = (cycle / 2) & 0x7fff;
-    A = ((divider >> 14) & 1) << 3
-      | ((divider >> 13) & 1) << 2
-      | ((divider >> 12) & 1) << 1
-      | ((divider >> 11) & 1) << 0;
-      */
 
     if (BM >= 4 && BM <= 7) {
         offset = (BM - 4) * 2;
@@ -528,19 +500,6 @@ void emulate(void) {
 
         debugger(op, arg);
 
-        /*
-        if (skip && frame_pc.page == 1 && frame_pc.addr == 0x1c)
-            skip = 0;
-        if (frame_pc.page == 0 && frame_pc.addr == 0x0a)
-            skip = 1;
-        */
-
-        // uncomment to cause code to jump to 7.00
-        /*
-        if (frame_pc.page == 4 && frame_pc.addr == 0x12)
-            skip = 1;
-        */
-
         cycle += pc.addr - frame_pc.addr;
 
         if (!skip) {
@@ -550,9 +509,6 @@ void emulate(void) {
         }
     }
 }
-
-int run = 0;
-int verbose = 0;
 
 void debugger(u8 op, u8 arg) {
     char buf[4096];
@@ -703,7 +659,7 @@ void decode(u8 op, u8 arg) {
         printf("nop\n");
     }
 
-
+    // control
     else if (op >= 0x80 && op <= 0xBF) {
         printf("tr %02x\n", op & 0b111111);
     } else if (op >= 0xE0 && op <= 0xEF) {
@@ -847,12 +803,6 @@ int main(int argc, char **argv) {
         have_data = 1;
         load_data(argv[2]);
     }
-
-    /*
-    for (i = 0; i < 0x10; ++i) {
-        printf("Page %x\n", i);
-        hexdump(ROM[i], 0x40, 1);
-    } */
 
     signal(SIGINT, stop_run);
     srand(0);
