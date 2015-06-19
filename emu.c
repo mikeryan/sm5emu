@@ -633,13 +633,16 @@ void debugger(u8 op, u8 arg) {
                 }
                 printf("memory breakpoint set on [%02x, %02x]\n", mem_break_addr, mem_break_end);
             }
+        } else if (strcmp(tokens[0], "cmb") == 0) {
+            mem_break = 0;
         } else if (strcmp(tokens[0], "t") == 0) {
             trace = 1 - trace;
             printf("Trace %sabled\n", trace ? "en" : "dis");
         } else if (strcmp(tokens[0], "skip") == 0) {
             skip = 1 - skip;
         } else if (strcmp(tokens[0], "hiz") == 0) {
-            hiz_break = 1;
+            hiz_break = 1 - hiz_break;
+            printf("Hi-Z break %sabled\n", hiz_break ? "en" : "dis");
         } else if (strcmp(tokens[0], "poke") == 0) {
             if (num < 3) {
                 printf("Error: poke requires two args\n");
