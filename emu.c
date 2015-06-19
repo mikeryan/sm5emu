@@ -36,7 +36,7 @@ int port2_hiz = 1;
 
 // debugger control
 int run = 0;
-int verbose = 0;
+int trace = 0;
 
 int do_break = 0;
 pc_t breakpoint = { 0, 0 };
@@ -546,7 +546,7 @@ void debugger(u8 op, u8 arg) {
         }
 
 
-        if (run && !verbose)
+        if (run && !trace)
             break;
 
         printf("%x.%02x : ", frame_pc.page, frame_pc.addr);
@@ -633,8 +633,9 @@ void debugger(u8 op, u8 arg) {
                 }
                 printf("memory breakpoint set on [%02x, %02x]\n", mem_break_addr, mem_break_end);
             }
-        } else if (strcmp(tokens[0], "v") == 0) {
-            verbose = 1;
+        } else if (strcmp(tokens[0], "t") == 0) {
+            trace = 1 - trace;
+            printf("Trace %sabled\n", trace ? "en" : "dis");
         } else if (strcmp(tokens[0], "skip") == 0) {
             skip = 1 - skip;
         } else if (strcmp(tokens[0], "hiz") == 0) {
