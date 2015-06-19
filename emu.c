@@ -782,6 +782,9 @@ int main(int argc, char **argv) {
 
     if (argc < 2) {
         printf("Usage: %s <rom.bin> [<data.csv>]\n", argv[0]);
+        printf("\n");
+        printf("sm5emu was written by Mike Ryan\n");
+        printf("See README for usage details\n");
         return 1;
     }
 
