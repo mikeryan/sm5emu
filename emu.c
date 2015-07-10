@@ -14,7 +14,7 @@ void decode(u8 op, u8 arg);
 u8 ROM[0x10][0x40];
 #define FETCH(X) do { (X) = ROM[pc.page][pc.addr]; ++pc.addr; } while (0)
 
-u8 RAM[0x40]; // A-series chips have 2x the RAM of non-A chips
+u8 RAM[0x100]; // A-series chips have 2x the RAM of non-A chips
 
 typedef struct _pc_t {
     u8 page;
@@ -261,6 +261,11 @@ void op_TC(u8 op, u8 arg) {
         skip = 1;
 }
 
+void op_TAM(u8 op, u8 arg) {
+    if (A == RAM[B])
+        skip = 1;
+}
+
 void op_TM(u8 op, u8 arg) {
     if (RAM[B] & (1 << (op & 0b11)))
         skip = 1;
@@ -307,12 +312,25 @@ void op_RM(u8 op, u8 arg) {
     RAM[B] &= ~mask;
 }
 
+void op_SM(u8 op, u8 arg) {
+    u8 mask = 1 << (op & 0b11);
+    RAM[B] |= mask;
+}
+
 void op_SC(u8 op, u8 arg) {
     C = 1;
 }
 
 void op_RC(u8 op, u8 arg) {
     C = 0;
+}
+
+void op_ID(u8 op, u8 arg) {
+    // TODO
+}
+
+void op_IE(u8 op, u8 arg) {
+    // TODO
 }
 
 
@@ -451,6 +469,8 @@ void emulate(void) {
         // test
         else if (op == 0x6E) {
             handler = op_TC;
+        } else if (op == 0x6F) {
+            handler = op_TAM;
         } else if (op >= 0x48 && op <= 0x4B) {
             handler = op_TM;
         } else if (op == 0x6B) {
@@ -462,11 +482,16 @@ void emulate(void) {
         // bit manip
         else if (op >= 0x40 && op <= 0x43) {
             handler = op_RM;
-        }
-        else if (op == 0x61) {
+        } else if (op >= 0x44 && op <= 0x47) {
+            handler = op_SM;
+        } else if (op == 0x61) {
             handler = op_SC;
         } else if (op == 0x60) {
             handler = op_RC;
+        } else if (op == 0x62) {
+            handler = op_ID;
+        } else if (op == 0x63) {
+            handler = op_IE;
         }
 
         // io control
@@ -602,7 +627,7 @@ void debugger(u8 op, u8 arg) {
         } else if (strcmp(tokens[0], "q") == 0) {
             exit(0);
         } else if (strcmp(tokens[0], "m") == 0) {
-            hexdump(RAM, 0x40, 0);
+            hexdump(RAM, 0x100, 0);
         } else if (strcmp(tokens[0], "r") == 0) {
             run = 1;
             break;
@@ -717,6 +742,8 @@ void decode(u8 op, u8 arg) {
     // test
     else if (op == 0x6E) {
         printf("tc\n");
+    } else if (op == 0x6F) {
+        printf("tam\n");
     } else if (op >= 0x48 && op <= 0x4B) {
         printf("tm %x\n", op & 0b11);
     } else if (op == 0x6B) {
@@ -728,10 +755,16 @@ void decode(u8 op, u8 arg) {
     // bit manip
     else if (op >= 0x40 && op <= 0x43) {
         printf("rm %x\n", op & 0b11);
+    } else if (op >= 0x44 && op <= 0x47) {
+        printf("sm %x\n", op & 0b11);
     } else if (op == 0x61) {
         printf("sc\n");
     } else if (op == 0x60) {
         printf("rc\n");
+    } else if (op == 0x62) {
+        printf("id\n");
+    } else if (op == 0x63) {
+        printf("ie\n");
     }
 
     // io control
