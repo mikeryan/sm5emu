@@ -627,7 +627,7 @@ void debugger(u8 op, u8 arg) {
                 else
                     port[portnum] = val;
             }
-        } else if (strcmp(tokens[0], "q") == 0) {
+        } else if (strcmp(tokens[0], "q") == 0 || strcmp(tokens[0], "quit") == 0) {
             exit(0);
         } else if (strcmp(tokens[0], "m") == 0) {
             hexdump(RAM, 0x100, 0);
