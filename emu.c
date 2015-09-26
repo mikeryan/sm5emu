@@ -9,6 +9,8 @@ typedef uint8_t u8;
 
 void debugger(u8 op, u8 arg);
 void decode(u8 op, u8 arg);
+void save_state(void);
+void restore_state(void);
 
 // ROM
 u8 ROM[0x10][0x40];
@@ -683,6 +685,10 @@ void debugger(u8 op, u8 arg) {
             } else {
                 RAM[strtoul(tokens[1], NULL, 16)] = strtoul(tokens[2], NULL, 16);
             }
+        } else if (strcmp(tokens[0], "save") == 0) {
+            save_state();
+        } else if (strcmp(tokens[0], "restore") == 0) {
+            restore_state();
         }
     }
 }
@@ -796,6 +802,58 @@ void decode(u8 op, u8 arg) {
     else {
         printf("unknown\n");
     }
+}
+
+void save_state(void) {
+    FILE *file;
+    char *name = "state";
+
+    file = fopen(name, "w");
+    if (file == NULL)
+        err(1, "Can't open %s", name);
+
+#define DUMP(X) fwrite(&X, sizeof(X), 1, file)
+
+    fwrite(RAM, sizeof(RAM), 1, file);
+    DUMP(pc);
+    DUMP(frame_pc);
+    DUMP(stack);
+    DUMP(sp);
+    DUMP(A);
+    DUMP(BM);
+    DUMP(BL);
+    DUMP(SB);
+    DUMP(C);
+    DUMP(skip);
+    DUMP(cycle);
+
+    fclose(file);
+}
+
+void restore_state(void) {
+    FILE *file;
+    char *name = "state";
+
+    file = fopen(name, "r");
+    if (file == NULL)
+        err(1, "Can't open %s", name);
+
+#define LOAD(X) fread(&X, sizeof(X), 1, file)
+
+    fread(RAM, sizeof(RAM), 1, file);
+    LOAD(pc);
+    LOAD(frame_pc);
+    LOAD(stack);
+    LOAD(sp);
+    LOAD(A);
+    LOAD(BM);
+    LOAD(BL);
+    LOAD(SB);
+    LOAD(C);
+    LOAD(skip);
+    LOAD(cycle);
+
+    fclose(file);
 }
 
 void load_data(char *name) {
