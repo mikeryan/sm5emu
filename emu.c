@@ -119,6 +119,11 @@ void op_RTN(u8 op, u8 arg) {
     pc = stack[sp];
 }
 
+void op_RTNS(u8 op, u8 arg) {
+    op_RTN(op, arg);
+    skip = 1;
+}
+
 
 ////////////////
 // data transfer
@@ -422,6 +427,8 @@ void emulate(void) {
             handler = op_CALL;
         } else if (op == 0x7D) {
             handler = op_RTN;
+        } else if (op == 0x7E) {
+            handler = op_RTNS;
         }
 
         // data transfer
@@ -697,6 +704,8 @@ void decode(u8 op, u8 arg) {
         printf("call %x.%02x\n", ((op & 0xf) << 2) | (arg >> 6), arg & 0b111111);
     } else if (op == 0x7D) {
         printf("rtn\n");
+    } else if (op == 0x7E) {
+        printf("rtns\n");
     }
 
     // data transfer
