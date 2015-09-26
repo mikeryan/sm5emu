@@ -59,14 +59,19 @@ typedef struct _sample_t {
 sample_t sample[100];
 unsigned total_samples = 0;
 
-static void hexdump(u8 *ptr, unsigned len, int bytes) {
+static void hexdump(u8 *ptr, unsigned len) {
     int i;
 
+    printf("   ");
+    for (i = 0; i < 16; ++i)
+        printf("%x ", i);
+    printf("\n");
+    printf("   -------------------------------\n");
+
     for (i = 0; i < len; ++i) {
-        if (bytes)
-            printf("%02x ", ptr[i]);
-        else
-            printf("%x ", ptr[i]);
+        if ((i & 15) == 0)
+            printf("%x: ", i / 16);
+        printf("%x ", ptr[i]);
         if ((i & 15) == 15)
             printf("\n");
     }
@@ -632,7 +637,7 @@ void debugger(u8 op, u8 arg) {
         } else if (strcmp(tokens[0], "q") == 0 || strcmp(tokens[0], "quit") == 0) {
             exit(0);
         } else if (strcmp(tokens[0], "m") == 0) {
-            hexdump(RAM, 0x100, 0);
+            hexdump(RAM, 0x100);
         } else if (strcmp(tokens[0], "r") == 0) {
             run = 1;
             break;
