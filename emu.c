@@ -542,11 +542,7 @@ void debugger(u8 op, u8 arg) {
     int i = 0, num = 0;
 
     while (1) {
-        if (!skip && ((frame_pc.page == 1 && frame_pc.addr == 0x02)
-            || (frame_pc.page == 0 && frame_pc.addr == 0x0a))) {
-            run = 0;
-            printf("Dead\n");
-        }
+        // TODO detect goto self condition and break execution
 
         // breakpoint
         if (do_break && frame_pc.page == breakpoint.page && frame_pc.addr == breakpoint.addr) {
