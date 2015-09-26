@@ -632,14 +632,20 @@ void debugger(u8 op, u8 arg) {
             run = 1;
             break;
         } else if (strcmp(tokens[0], "b") == 0) {
-            if (num < 3) {
-                printf("Error: b requires two args\n");
+            if (num < 2) {
+                printf("Error: b requires one or two args\n");
+                do_break = 0;
+            } else if (num < 3) {
+                breakpoint.page = pc.page;
+                breakpoint.addr = strtoul(tokens[1], NULL, 16);
+                do_break = 1;
             } else {
                 breakpoint.page = strtoul(tokens[1], NULL, 16);
                 breakpoint.addr = strtoul(tokens[2], NULL, 16);
                 do_break = 1;
-                printf("breakpoint set at %x.%02x\n", breakpoint.page, breakpoint.addr);
             }
+            if (do_break)
+                printf("breakpoint set at %x.%02x\n", breakpoint.page, breakpoint.addr);
         } else if (strcmp(tokens[0], "cb") == 0) {
             do_break = 0;
         } else if (strcmp(tokens[0], "sp") == 0) {
