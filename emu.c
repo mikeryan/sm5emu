@@ -7,7 +7,7 @@
 
 typedef uint8_t u8;
 
-void debugger(u8 op, u8 arg);
+int debugger(u8 op, u8 arg);
 void decode(u8 op, u8 arg);
 void save_state(void);
 void restore_state(void);
@@ -413,9 +413,14 @@ void op_NOP(u8 op, u8 arg) {
 void emulate(void) {
     u8 op = 0, arg = 0;
     op_handler_t handler = op_NOP;
+    int execute = 1;
 
     while (1) {
-        frame_pc = pc;
+        // FIXME this is a nasty, ugly hack
+        if (execute)
+            frame_pc = pc;
+        else
+            --pc.addr;
         FETCH(op);
         // TODO check overflow
 
@@ -536,7 +541,11 @@ void emulate(void) {
             abort();
         }
 
-        debugger(op, arg);
+        execute = debugger(op, arg);
+        if (!execute) {
+            printf("skipping\n");
+            continue;
+        }
 
         if (interrupt) {
             stack[sp] = pc;
@@ -563,7 +572,7 @@ void emulate(void) {
 
 
 
-void debugger(u8 op, u8 arg) {
+int debugger(u8 op, u8 arg) {
     char buf[4096];
     char *tokens[16], *token;
     int i = 0, num = 0;
@@ -707,12 +716,14 @@ void debugger(u8 op, u8 arg) {
             save_state();
         } else if (strcmp(tokens[0], "restore") == 0) {
             restore_state();
+            return 0;
         } else if (strcmp(tokens[0], "interrupt") == 0) {
             interrupt = 1;
         } else if (strcmp(tokens[0], "reg") == 0) {
             hexdump(REG, 0x10);
         }
     }
+    return 1;
 }
 
 void decode(u8 op, u8 arg) {
