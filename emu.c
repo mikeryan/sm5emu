@@ -27,6 +27,7 @@ pc_t pc = { 0, 0 };
 pc_t frame_pc = { 0, 0 };
 pc_t stack[4] = { { 0, }, };
 unsigned sp = 0;
+int interrupt = 0;
 
 u8 A = 0, X = 0;
 u8 BL = 0, BM = 0, SB = 0;
@@ -436,6 +437,8 @@ void emulate(void) {
             handler = op_RTN;
         } else if (op == 0x7E) {
             handler = op_RTNS;
+        } else if (op == 0x7F) {
+            handler = op_RTN; // XXX does this need any other side effects?
         }
 
         // data transfer
@@ -533,12 +536,20 @@ void emulate(void) {
 
         debugger(op, arg);
 
-        cycle += pc.addr - frame_pc.addr;
-
-        if (!skip) {
-            handler(op, arg);
+        if (interrupt) {
+            stack[sp] = pc;
+            ++sp;
+            pc.page = 0x2;
+            pc.addr = 0;
+            interrupt = 0;
         } else {
-            skip = 0;
+            cycle += pc.addr - frame_pc.addr;
+
+            if (!skip) {
+                handler(op, arg);
+            } else {
+                skip = 0;
+            }
         }
     }
 }
@@ -694,6 +705,8 @@ void debugger(u8 op, u8 arg) {
             save_state();
         } else if (strcmp(tokens[0], "restore") == 0) {
             restore_state();
+        } else if (strcmp(tokens[0], "interrupt") == 0) {
+            interrupt = 1;
         }
     }
 }
@@ -717,6 +730,8 @@ void decode(u8 op, u8 arg) {
         printf("rtn\n");
     } else if (op == 0x7E) {
         printf("rtns\n");
+    } else if (op == 0x7F) {
+        printf("rtni\n");
     }
 
     // data transfer
