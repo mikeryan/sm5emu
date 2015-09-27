@@ -17,6 +17,7 @@ u8 ROM[0x10][0x40];
 #define FETCH(X) do { (X) = ROM[pc.page][pc.addr]; ++pc.addr; } while (0)
 
 u8 RAM[0x100]; // A-series chips have 2x the RAM of non-A chips
+u8 REG[0x10];
 
 typedef struct _pc_t {
     u8 page;
@@ -355,6 +356,7 @@ void op_OUTL(u8 op, u8 arg) {
 }
 
 void op_OUT(u8 op, u8 arg) {
+    REG[BL] = A;
     if (BL == 0xf) {
         port2_hiz = A ? 0 : 1;
         printf("%8u port write hiz\n", cycle);
@@ -707,6 +709,8 @@ void debugger(u8 op, u8 arg) {
             restore_state();
         } else if (strcmp(tokens[0], "interrupt") == 0) {
             interrupt = 1;
+        } else if (strcmp(tokens[0], "reg") == 0) {
+            hexdump(REG, 0x10);
         }
     }
 }
@@ -835,6 +839,7 @@ void save_state(void) {
 #define DUMP(X) fwrite(&X, sizeof(X), 1, file)
 
     fwrite(RAM, sizeof(RAM), 1, file);
+    fwrite(REG, sizeof(REG), 1, file);
     DUMP(pc);
     DUMP(frame_pc);
     DUMP(stack);
@@ -861,6 +866,7 @@ void restore_state(void) {
 #define LOAD(X) fread(&X, sizeof(X), 1, file)
 
     fread(RAM, sizeof(RAM), 1, file);
+    fread(REG, sizeof(REG), 1, file);
     LOAD(pc);
     LOAD(frame_pc);
     LOAD(stack);
