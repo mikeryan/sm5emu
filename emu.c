@@ -856,6 +856,7 @@ void save_state(void) {
     DUMP(stack);
     DUMP(sp);
     DUMP(A);
+    DUMP(X);
     DUMP(BM);
     DUMP(BL);
     DUMP(SB);
@@ -883,6 +884,7 @@ void restore_state(void) {
     LOAD(stack);
     LOAD(sp);
     LOAD(A);
+    LOAD(X);
     LOAD(BM);
     LOAD(BL);
     LOAD(SB);
