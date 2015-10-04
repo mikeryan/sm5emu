@@ -403,6 +403,12 @@ void op_DTA(u8 op, u8 arg) {
     }
 }
 
+// halt
+void op_HALT(u8 op, u8 arg) {
+    printf("Halted\n");
+    run = 0;
+}
+
 
 typedef void (*op_handler_t)(u8 op, u8 arg);
 
@@ -533,6 +539,11 @@ void emulate(void) {
         } else if (op == 0x69) {
             FETCH(arg);
             handler = op_DTA;
+        }
+
+        // special
+        else if (op == 0x77) {
+            handler = op_HALT;
         }
 
 
@@ -831,6 +842,11 @@ void decode(u8 op, u8 arg) {
         printf("pat %x\n", arg);
     } else if (op == 0x69) {
         printf("dta\n");
+    }
+
+    // special
+    else if (op == 0x77) {
+        printf("halt\n");
     }
 
 
